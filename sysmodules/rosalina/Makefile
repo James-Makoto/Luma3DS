@@ -32,7 +32,7 @@ INCLUDES	:=	include include/gdb include/menus include/redshift
 # options for code generation
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
-DEFINES :=	-D__3DS__ -DHBLDR_DEFAULT_3DSX_TID="0x$(HBLDR_DEFAULT_3DSX_TID)ULL" -DHBLDR_DEFAULT_3DSX_TITLE_NAME="\"$(HBLDR_DEFAULT_3DSX_TITLE_NAME)\""
+DEFINES :=	-D__3DS__ -DONLY_CN_FONTLIB="$(ONLY_CN_FONTLIB)" -DHBLDR_DEFAULT_3DSX_TID="0x$(HBLDR_DEFAULT_3DSX_TID)ULL" -DHBLDR_DEFAULT_3DSX_TITLE_NAME="\"$(HBLDR_DEFAULT_3DSX_TITLE_NAME)\""
 
 FALSEPOSITIVES := -Wno-array-bounds -Wno-stringop-overflow -Wno-stringop-overread
 CFLAGS	:=	-g -std=gnu11 -Wall -Wextra -Werror -Wno-unused-value -Os -mword-relocations \
