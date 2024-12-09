@@ -2077,22 +2077,22 @@ void RosalinaMenu_Cheats(void)
             }
             if (R_SUCCEEDED(r))
             {
-                Draw_DrawFormattedString(16, 16, COLOR_TITLE, "金手指列表");
+                Draw_DrawFormattedString(8, 8, COLOR_TITLE, "金手指列表");
 
                 for (s32 i = 0; i < CHEATS_PER_MENU_PAGE && page * CHEATS_PER_MENU_PAGE + i < cheatCount; i++)
                 {
                     char buf[65] = { 0 };
                     s32 j = page * CHEATS_PER_MENU_PAGE + i;
-                    const char * checkbox = (cheats[j]->active ? "[开]" : "[关]");
+                    const char * checkbox = (cheats[j]->active ? "[X]" : "[ ]");
                     sprintf(buf, "%s%s", checkbox, cheats[j]->name);
                     if (cheats[j]->hasKeyCode) {
-                        Draw_DrawString(32, 48 + i * (SPACING_Y+4), COLOR_WHITE, buf);
-                        Draw_CheatHotKey(48 + i * (SPACING_Y+4), COLOR_WHITE, cheats[j]->keyCode);
+                        Draw_DrawString(20, 28 + i * (SPACING_Y+4), COLOR_WHITE, buf);
+                        Draw_CheatHotKey(28 + i * (SPACING_Y+4), COLOR_WHITE, cheats[j]->keyCode);
                     } else {
-                        Draw_DrawString(32, 48 + i * (SPACING_Y+4), cheats[j]->valid ? COLOR_WHITE : COLOR_RED, buf);
+                        Draw_DrawString(20, 28 + i * (SPACING_Y+4), cheats[j]->valid ? COLOR_WHITE : COLOR_RED, buf);
                     }
-                    Draw_DrawCharacter(16, 48 + i * (SPACING_Y+4), COLOR_TITLE, j == selected ? '>' : ' ');
-                    Draw_DrawString(40, 48 + i * (SPACING_Y+4), cheats[j]->active ? COLOR_GREEN : COLOR_RED, cheats[j]->active ? "开" : "关");
+                    Draw_DrawCharacter(8, 28 + i * (SPACING_Y+4), COLOR_TITLE, j == selected ? '>' : ' ');
+                    // Draw_DrawString(40, 28 + i * (SPACING_Y+4), cheats[j]->active ? COLOR_GREEN : COLOR_RED, cheats[j]->active ? "开" : "关");
                 }
             }
             else
