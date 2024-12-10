@@ -93,7 +93,7 @@ int NumberOfHotKey(u32 n)
 
 void Draw_CheatHotKey(u32 posY, u32 color, u32 keycode) {
     u16 *const fb = (u16 *)FB_BOTTOM_VRAM_ADDR;
-    //11111111000100001100111111111111
+    // 11111111000100001100111111111111
     uint16_t offset[] = {0,16,32,48,64,80,96,112,128,144,160,176,368,368,192,208,368,368,368,368,224,368,368,368,240,256,272,288,304,320,336,352};
     s32 charWidth = 16;
     int hkCount = NumberOfHotKey(keycode);

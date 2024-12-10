@@ -2077,7 +2077,11 @@ void RosalinaMenu_Cheats(void)
             }
             if (R_SUCCEEDED(r))
             {
-                Draw_DrawFormattedString(8, 8, COLOR_TITLE, "金手指列表");
+                Draw_DrawFormattedString(2, 2, COLOR_TITLE, "金手指列表");
+                char idx[16] = { 0 };
+                sprintf(idx, "%d/%d 页", (u8) page + 1,
+                        (cheatCount % CHEATS_PER_MENU_PAGE == 0) ? cheatCount / CHEATS_PER_MENU_PAGE : (cheatCount / CHEATS_PER_MENU_PAGE) + 1);
+                Draw_DrawString(316 - (strlen(idx) - 1) * 8, 2, COLOR_TITLE, idx);
 
                 for (s32 i = 0; i < CHEATS_PER_MENU_PAGE && page * CHEATS_PER_MENU_PAGE + i < cheatCount; i++)
                 {
@@ -2086,13 +2090,12 @@ void RosalinaMenu_Cheats(void)
                     const char * checkbox = (cheats[j]->active ? "[X]" : "[ ]");
                     sprintf(buf, "%s%s", checkbox, cheats[j]->name);
                     if (cheats[j]->hasKeyCode) {
-                        Draw_DrawString(20, 28 + i * (SPACING_Y+4), COLOR_WHITE, buf);
-                        Draw_CheatHotKey(28 + i * (SPACING_Y+4), COLOR_WHITE, cheats[j]->keyCode);
+                        Draw_DrawString(14, 22 + i * (SPACING_Y+4), COLOR_WHITE, buf);
+                        Draw_CheatHotKey(22 + i * (SPACING_Y+4), COLOR_WHITE, cheats[j]->keyCode);
                     } else {
-                        Draw_DrawString(20, 28 + i * (SPACING_Y+4), cheats[j]->valid ? COLOR_WHITE : COLOR_RED, buf);
+                        Draw_DrawString(14, 22 + i * (SPACING_Y+4), cheats[j]->valid ? COLOR_WHITE : COLOR_RED, buf);
                     }
-                    Draw_DrawCharacter(8, 28 + i * (SPACING_Y+4), COLOR_TITLE, j == selected ? '>' : ' ');
-                    // Draw_DrawString(40, 28 + i * (SPACING_Y+4), cheats[j]->active ? COLOR_GREEN : COLOR_RED, cheats[j]->active ? "开" : "关");
+                    Draw_DrawCharacter(2, 22 + i * (SPACING_Y+4), COLOR_TITLE, j == selected ? '>' : ' ');
                 }
             }
             else
