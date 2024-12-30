@@ -388,7 +388,7 @@ boot:
             res = patch1x2xNativeAndSafeFirm();
             break;
         case NATIVE_PROTOTYPE:
-            res = patchPrototypeNative();
+            res = patchPrototypeNative(nandType);
             break;
     }
 

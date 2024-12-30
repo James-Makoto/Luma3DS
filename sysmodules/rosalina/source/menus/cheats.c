@@ -46,7 +46,7 @@ typedef struct CheatDescription
         u8 hasKeyCode : 1;
         u8 activeStorage : 1;
     };
-    char name[39];
+    char name[40];
     u32 codesCount;
     u32 storage1;
     u32 storage2;
@@ -1959,8 +1959,8 @@ static void Cheat_LoadCheatsIntoMemory(u64 titleId)
                     cheat = Cheat_AllocCheat();
                     cheatSize += sizeof(CheatDescription);
                 }
-                strncpy(cheat->name, line, 38);
-                cheat->name[38] = '\0';
+                strncpy(cheat->name, line, 39);
+                cheat->name[39] = '\0';
             }
         }
     } while (R_SUCCEEDED(res) && cheatSize < sizeof(cheatBuffer));

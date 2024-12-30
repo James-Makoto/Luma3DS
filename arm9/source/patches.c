@@ -852,12 +852,28 @@ u32 patchProtoNandSignatureCheck(u8 *pos, u32 size) {
         // Signature check function returns 0 if failed and 1 if succeeded.
         // Proc9 breaks if the returned value is 0, change it to break if
         // the returned value is 2 (never).
-        u8 *off = memsearch(pos, pattern, size, sizeof(pattern)) + 0x20;
+        u8 *off = memsearch(pos, pattern, size, sizeof(pattern));
         if (!off)
             return 1;
 
-        *off = 2;
+        off[0x20] = 2;
     }
+
+    else if (firmProtoVersion == 238) { // SDK 0.10
+        // Same patch as for v243 ported to the different ncsd_read() function
+        static const u8 pattern[] = {
+            0x00, 0x11, 0x9f, 0xe5,
+            0x00, 0x51, 0x9f, 0xe5,
+        };
+
+        u8 *off = memsearch(pos, pattern, size, sizeof(pattern));
+        if (!off)
+            return 1;
+
+        off[0x20] = 2;
+    }
+
+    else return 1;
 
     return 0;
 }
