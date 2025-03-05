@@ -44,7 +44,7 @@ static u32 framebufferCacheSize;
 static void *framebufferCache;
 static RecursiveLock lock;
 
-static u8 font_bin[0x40680];
+static u8 font_bin[0x40680] = {};
 char *fontlibpath = "/luma/unifont_cn.bin";
 
 void ReadFont2Mem(){
@@ -61,8 +61,8 @@ void ReadFont2Mem(){
         IFile_GetSize(&file, &fileSize);
         u64 total;
         res = IFile_Read(&file, &total, font_bin, fileSize);
+        IFile_Close(&file);
     }
-    IFile_Close(&file);
 }
 
 void Draw_Init(void)
@@ -80,10 +80,10 @@ void Draw_Unlock(void)
     RecursiveLock_Unlock(&lock);
 }
 
-int NumberOfHotKey(u32 n)
+int NumberOfHotKey(u32 n, int maxIndex)
 {
     int count = 0;
-    for(int i = 0; i < 32; i++){
+    for(int i = 0; i < maxIndex; i++){
         if(GETBIT(n,i) == 1){
             count++;
         }
@@ -94,16 +94,25 @@ int NumberOfHotKey(u32 n)
 void Draw_CheatHotKey(u32 posY, u32 color, u32 keycode) {
     u16 *const fb = (u16 *)FB_BOTTOM_VRAM_ADDR;
     // 11111111000100001100111111111111
-    uint16_t offset[] = {0,16,32,48,64,80,96,112,128,144,160,176,368,368,192,208,368,368,368,368,224,368,368,368,240,256,272,288,304,320,336,352};
+    uint16_t offset[] = {0,16,32,48,64,80,96,112,128,144,160,
+                        176,368,368,192,208,368,368,368,368,224,
+                        368,368,368,240,256,272,288,304,320,336,352};
     s32 charWidth = 16;
-    int hkCount = NumberOfHotKey(keycode);
-    u32 posX = SCREEN_BOT_WIDTH - hkCount * 20 - 16;
+
+    u16 low16 = keycode & 0xFFFF;
+    u16 high16 = (keycode >> 16) & 0xFFFF;
+    u16 inverse_low16 = ~low16 & 0xFFFF;
+    int maxIndex = (high16 == inverse_low16 ? 16 : 32);
+
+    int hkCount = NumberOfHotKey(keycode, maxIndex);
+    u32 posX = SCREEN_BOT_WIDTH - hkCount * 18;
     u16 printarr[hkCount];
-    for(int i = 0,y = 0;i<32;i++){
+
+    for(int i=0, y=0; i < maxIndex; i++) {
         if(GETBIT(keycode,i) == 1){
-            //if key is invalid
-            if(offset[i] == 368){
-                posX = SCREEN_BOT_WIDTH - 36;
+            // if key is invalid
+            if(offset[i] == 368) {
+                posX = SCREEN_BOT_WIDTH - 18;
                 s32 y;
                 for(y = 0; y < 16; y++)
                 {
@@ -116,7 +125,7 @@ void Draw_CheatHotKey(u32 posY, u32 color, u32 keycode) {
                     }
                 }
                 return;
-            }else{
+            } else {
                 printarr[y] = offset[i];
                 y++;
             }
@@ -135,7 +144,7 @@ void Draw_CheatHotKey(u32 posY, u32 color, u32 keycode) {
                 fb[screenPos / 2] = pixelColor;
             }
         }
-        posX += 20;
+        posX += 18;
     }
 }
 
@@ -168,8 +177,7 @@ uint8_t Draw_DrawCharacter(u32 posX, u32 posY, u32 color, uint16_t character)
     return pixelBlack;
 }
 
-
-u32 Draw_DrawString(u32 posX, u32 posY, u32 color, const char *string)
+u32 Draw_DrawStringWrap(u32 posX, u32 posY, u32 color, const char *string, bool isSingleLine)
 {
     for(u32 i = 0, CutWidth = 0; i < strlen(string); i++)
         switch(string[i])
@@ -187,6 +195,8 @@ u32 Draw_DrawString(u32 posX, u32 posY, u32 color, const char *string)
                 //Make sure we never get out of the screen
                 if(CutWidth >= (SCREEN_BOT_WIDTH - posX))
                 {
+                    if (isSingleLine)
+                        return posY;
                     posY += SPACING_Y;
                     CutWidth = 0; //Little offset so we know the same string continues
                     if(string[i] == ' ') break; //Spaces at the start look weird
@@ -229,6 +239,11 @@ u32 Draw_DrawString(u32 posX, u32 posY, u32 color, const char *string)
         }
 
     return posY;
+}
+
+u32 Draw_DrawString(u32 posX, u32 posY, u32 color, const char *string)
+{
+    return Draw_DrawStringWrap(posX, posY, color, string, false);
 }
 
 u32 Draw_DrawFormattedString(u32 posX, u32 posY, u32 color, const char *fmt, ...)

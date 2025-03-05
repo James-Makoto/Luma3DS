@@ -94,6 +94,7 @@ void Draw_Unlock(void);
 void Draw_CheatHotKey(u32 posY,u32 color,u32 keycode);
 
 uint8_t Draw_DrawCharacter(u32 posX, u32 posY, u32 color, uint16_t character);
+u32 Draw_DrawStringWrap(u32 posX, u32 posY, u32 color, const char *string, bool isSingleLine);
 u32 Draw_DrawString(u32 posX, u32 posY, u32 color, const char *string);
 
 __attribute__((format(printf,4,5)))

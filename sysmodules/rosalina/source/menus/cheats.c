@@ -46,7 +46,7 @@ typedef struct CheatDescription
         u8 hasKeyCode : 1;
         u8 activeStorage : 1;
     };
-    char name[40];
+    char name[42];
     u32 codesCount;
     u32 storage1;
     u32 storage2;
@@ -1959,8 +1959,8 @@ static void Cheat_LoadCheatsIntoMemory(u64 titleId)
                     cheat = Cheat_AllocCheat();
                     cheatSize += sizeof(CheatDescription);
                 }
-                strncpy(cheat->name, line, 39);
-                cheat->name[39] = '\0';
+                strncpy(cheat->name, line, 41);
+                cheat->name[41] = '\0';
             }
         }
     } while (R_SUCCEEDED(res) && cheatSize < sizeof(cheatBuffer));
@@ -2090,10 +2090,10 @@ void RosalinaMenu_Cheats(void)
                     const char * checkbox = (cheats[j]->active ? "[X]" : "[ ]");
                     sprintf(buf, "%s%s", checkbox, cheats[j]->name);
                     if (cheats[j]->hasKeyCode) {
-                        Draw_DrawString(14, 22 + i * (SPACING_Y+4), COLOR_WHITE, buf);
-                        Draw_CheatHotKey(22 + i * (SPACING_Y+4), COLOR_WHITE, cheats[j]->keyCode);
+                        Draw_DrawStringWrap(14, 22 + i * (SPACING_Y+4), cheats[j]->valid ? COLOR_WHITE : COLOR_RED, buf, true);
+                        Draw_CheatHotKey(22 + i * (SPACING_Y+4), cheats[j]->valid ? COLOR_WHITE : COLOR_RED, cheats[j]->keyCode);
                     } else {
-                        Draw_DrawString(14, 22 + i * (SPACING_Y+4), cheats[j]->valid ? COLOR_WHITE : COLOR_RED, buf);
+                        Draw_DrawStringWrap(14, 22 + i * (SPACING_Y+4), cheats[j]->valid ? COLOR_WHITE : COLOR_RED, buf, true);
                     }
                     Draw_DrawCharacter(2, 22 + i * (SPACING_Y+4), COLOR_TITLE, j == selected ? '>' : ' ');
                 }
