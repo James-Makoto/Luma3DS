@@ -152,14 +152,21 @@ uint8_t Draw_DrawCharacter(u32 posX, u32 posY, u32 color, uint16_t character)
 {
     u16 *const fb = (u16 *)FB_BOTTOM_VRAM_ADDR;
     uint32_t charPos = GetFontOffset(character);
+    uint16_t offset[] = { 80, 96, 64, 112 };
     uint8_t pixelBlack = 0;
     s32 charWidth = 16;
     s32 y;
     for(y = 0; y < 16; y++)
     {
         uint16_t charBit = 0;
-        for (int i = 0; i < 2; i++) {
-            charBit += font_bin[(charPos + y) * 2 + i] << ((1-i) * 8);
+        if (character >= 0x2190 && character <= 0x2193)
+        {
+            charPos = offset[character - 0x2190];
+            charBit = keyfont[charPos + y];
+        } else {
+            for (int i = 0; i < 2; i++) {
+                charBit += font_bin[(charPos + y) * 2 + i] << ((1-i) * 8);
+            }
         }
         s32 x;
         for(x = 16; x > 16 - charWidth; x--)
