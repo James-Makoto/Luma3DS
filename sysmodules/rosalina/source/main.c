@@ -282,5 +282,7 @@ int main(void)
     MyThread_Join(taskRunnerThread, -1LL);
     MyThread_Join(errDispThread, -1LL);
 
+    FreeFontFromMem();
+
     return 0;
 }

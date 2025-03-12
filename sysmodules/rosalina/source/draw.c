@@ -44,17 +44,25 @@ static u32 framebufferCacheSize;
 static void *framebufferCache;
 static RecursiveLock lock;
 
-static u8 font_bin[0x40680] = {};
+u8* font_bin = NULL;
 char *fontlibpath = "/luma/unifont_cn.bin";
 
 void ReadFont2Mem(){
-    IFile file;
-    u64 fileSize;
     Result res;
+    u32 tmp;
+    u32 addr = 0x0D800000;
+
+    res = svcControlMemoryEx(&tmp, addr, 0, 0x41000, MEMOP_ALLOC | MEMOP_REGION_SYSTEM, MEMPERM_READWRITE, true);
+    if (R_SUCCEEDED(res))
+        font_bin = (u8 *)addr;
+
     s64 out;
     bool isSdMode;
     if(R_FAILED(svcGetSystemInfo(&out, 0x10000, 0x203))) svcBreak(USERBREAK_ASSERT);
     isSdMode = (bool)out;
+
+    IFile file;
+    u64 fileSize;
     FS_ArchiveID archiveId = isSdMode ? ARCHIVE_SDMC : ARCHIVE_NAND_RW;
     res = IFile_Open(&file, archiveId, fsMakePath(PATH_EMPTY, ""), fsMakePath(PATH_ASCII, fontlibpath), FS_OPEN_READ);
     if(R_SUCCEEDED(res)){
@@ -63,6 +71,13 @@ void ReadFont2Mem(){
         res = IFile_Read(&file, &total, font_bin, fileSize);
         IFile_Close(&file);
     }
+}
+
+void FreeFontFromMem(void)
+{
+    u32 tmp;
+    if (font_bin)
+        svcControlMemoryEx(&tmp, (u32)font_bin, 0, 0x41000, MEMOP_FREE, MEMPERM_DONTCARE, false);
 }
 
 void Draw_Init(void)

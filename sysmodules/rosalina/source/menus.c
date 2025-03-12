@@ -246,6 +246,18 @@ void RosalinaMenu_ShowCredits(void)
 
 void RosalinaMenu_AboutCnVer(void)
 {
+    s64 outInfo;
+    svcGetSystemInfo(&outInfo, 0x10000, 0);
+    u32 version = (u32)outInfo;
+
+    char aboutString[144];
+    if (GET_VERSION_REVISION(version) != 0) {
+        sprintf(aboutString, "  Luma3DS中文版基于官方v%d.%d.%d版本,\n", (int)GET_VERSION_MAJOR(version), (int)GET_VERSION_MINOR(version), (int)GET_VERSION_REVISION(version));
+    } else {
+        sprintf(aboutString, "  Luma3DS中文版基于官方v%d.%d版本,\n", (int)GET_VERSION_MAJOR(version), (int)GET_VERSION_MINOR(version));
+    }
+    strcat(aboutString, "加入中文字库,优化菜单显示,并支持中文\n金手指及其热键显示。");
+
     Draw_Lock();
     Draw_ClearFramebuffer();
     Draw_FlushFramebuffer();
@@ -256,8 +268,9 @@ void RosalinaMenu_AboutCnVer(void)
         Draw_Lock();
         Draw_DrawString(16, 16, COLOR_TITLE, "关于中文版");
 
-        u32 posY = Draw_DrawString(16, 48, COLOR_WHITE, "  Luma3DS中文版基于官方最新的v13.3.1\n版本，加入中文字库，优化菜单显示，并\n支持中文金手指及金手指快捷键提示。");
-        posY = Draw_DrawString(16, posY + SPACING_Y + 4, COLOR_WHITE, "  感谢开源社区为此默默贡献的开发者们\n该中文化项目同样开源在Github上\n(https://github.com/R-YaTian/Luma3DS)\n本版本开源免费，禁止商业用途！\n                  Cynric & R-YaTian\n                          2025/03/05");
+        u32 posY = Draw_DrawString(16, 48, COLOR_WHITE, aboutString);
+        posY = Draw_DrawString(16, posY + SPACING_Y + 4, COLOR_WHITE,
+            "  感谢开源社区为此默默贡献的开发者们\n该中文化项目同样开源在Github上:\n(https://github.com/R-YaTian/Luma3DS)\n本版本开源免费,禁止商业用途！\n                   Cynric & R-YaTian\n                          "COMPILE_DATE);
         Draw_FlushFramebuffer();
         Draw_Unlock();
     }

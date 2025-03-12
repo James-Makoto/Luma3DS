@@ -86,6 +86,7 @@
 #define DRAW_MAX_FORMATTED_STRING_SIZE  512
 
 void ReadFont2Mem(void);
+void FreeFontFromMem(void);
 void Draw_Init(void);
 
 void Draw_Lock(void);
