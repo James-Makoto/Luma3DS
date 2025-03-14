@@ -141,7 +141,7 @@ static int ERRF_FormatRegisterDump(char *out, const ERRF_ExceptionData *exceptio
 static int ERRF_FormatGenericInfo(char *out, const ERRF_FatalErrInfo *info)
 {
     static const char *types[] = {
-        "常见", "损坏", "卡拔出", "exception", "result 失败", "常见(仅日志)", "无效"
+        "常规", "损坏", "卡拔出", "exception", "result 失败", "常规(仅日志)", "无效"
     };
 
     static const char *exceptionTypes[] = {
@@ -195,7 +195,7 @@ static int ERRF_FormatError(char *out, const ERRF_FatalErrInfo *info, bool isLog
         dateTimeToString(dateTimeStr, timeNow, false);
         out += sprintf(out, "报告于:      %s\n", dateTimeStr);
         dateTimeToString(dateTimeStr, timeAtBoot, false);
-        out += sprintf(out, "系统启动时间: %s\n", dateTimeStr);
+        out += sprintf(out, "系统启动时间: %s\n\n", dateTimeStr);
     }
     switch (info->type)
     {
