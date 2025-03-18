@@ -3,7 +3,7 @@
 #include "draw.h"
 #include <stdio.h>
 
-static const char *__press_b_to_close = "Press [B] to close";
+static const char *__press_b_to_close = "按 [B] 键以关闭";
 
 void    DispMessage(const char *title, const char *message)
 {
@@ -15,7 +15,7 @@ void    DispMessage(const char *title, const char *message)
 
     Draw_DrawString(10, 10, COLOR_TITLE, title);
 
-    Draw_DrawString(30, 30, COLOR_WHITE, message);
+    Draw_DrawString(16, 30, COLOR_WHITE, message);
     Draw_DrawString(200, 220, COLOR_TITLE, __press_b_to_close);
 
 
@@ -34,7 +34,7 @@ u32    DispErrMessage(const char *title, const char *message, const Result error
 {
     char buf[100];
 
-    sprintf(buf, "Error code: 0x%08lX", error);
+    sprintf(buf, "错误代码: 0x%08lX", error);
     menuEnter();
 
     Draw_Lock();
@@ -43,8 +43,8 @@ u32    DispErrMessage(const char *title, const char *message, const Result error
 
     Draw_DrawString(10, 10, COLOR_TITLE, title);
 
-    u32 posY = Draw_DrawString(30, 30, COLOR_WHITE, message);
-    Draw_DrawString(30, posY + 20, COLOR_RED, buf);
+    u32 posY = Draw_DrawString(16, 30, COLOR_WHITE, message);
+    Draw_DrawString(16, posY + 20, COLOR_RED, buf);
     Draw_DrawString(200, 220, COLOR_TITLE, __press_b_to_close);
 
     u32 keys = 0;
@@ -88,22 +88,22 @@ void    DisplayPluginMenu(u32   *cmdbuf)
             Draw_DrawString(10, 10, COLOR_TITLE, title);
 
             // Draw items
-            u32 i = MAX(0, (int)cursor - 7);
-            u32 end = MIN(nbItems, i + 16);
+            u32 i = MAX(0, (int)cursor - 4);
+            u32 end = MIN(nbItems, i + 10);
             u32 posY = 30;
 
-            for (; i < end; ++i, posY += 10)
+            for (; i < end; ++i, posY += 18)
             {
                 sprintf(buffer, "[ ] %s", items[i]);
-                Draw_DrawString(30, posY, COLOR_WHITE, buffer);
+                Draw_DrawString(14, posY, COLOR_WHITE, buffer);
 
-                if (i == cursor) Draw_DrawCharacter(10, posY, COLOR_TITLE, '>');
-                if (states[i]) Draw_DrawCharacter(36, posY, COLOR_LIME, 'x');
+                if (i == cursor) Draw_DrawCharacter(2, posY, COLOR_TITLE, '>');
+                if (states[i]) Draw_DrawCharacter(22, posY, COLOR_LIME, 'x');
             }
 
             // Draw hint
             if (hints[cursor][0])
-                Draw_DrawString(10, 200, COLOR_TITLE, hints[cursor]);
+                Draw_DrawString(10, 214, COLOR_TITLE, hints[cursor]);
         }
 
         // Wait for input
