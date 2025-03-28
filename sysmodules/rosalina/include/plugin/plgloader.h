@@ -93,6 +93,9 @@ typedef struct
     u32             swapLoadChecksum;    
 
     bool            eventsSelfManaged;
+#if BUILD_FOR_LEVEL256
+    bool            isOnlinePlugin;
+#endif
     bool            isMemPrivate;
 }   PluginLoaderContext;
 

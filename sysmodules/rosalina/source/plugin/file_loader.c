@@ -7,6 +7,13 @@
 #include "ifile.h"
 #include "utils.h"
 
+#if BUILD_FOR_LEVEL256
+#include "../../../../global/level256/config.h"
+#include "../../../../global/level256/titles.h"
+
+static const char *g_onlinePluginPath = LEVEL256_PLUGIN_PATH;
+#endif
+
 // Use a global to avoid stack overflow, those structs are quite heavy
 static FS_DirectoryEntry   g_entries[10];
 
@@ -107,6 +114,17 @@ static Result   OpenFile(IFile *file, const char *path)
 
 static Result   OpenPluginFile(u64 tid, IFile *plugin)
 {
+#if BUILD_FOR_LEVEL256
+#define HID_PAD           (REG32(0x10146000) ^ 0xFFF)
+    if (!(HID_PAD & KEY_SELECT) && isOnlineSupportedTitle(tid) && R_SUCCEEDED(OpenFile(plugin, g_onlinePluginPath)))
+    {
+        PluginLoaderCtx.pluginPath = g_onlinePluginPath;
+        PluginLoaderCtx.isOnlinePlugin = true;
+        return 0;
+    }
+#undef HID_PAD
+#endif
+
     if (R_FAILED(FindPluginFile(tid)) || OpenFile(plugin, g_path))
     {
         // Try to open default plugin
@@ -317,7 +335,6 @@ bool     TryToLoadPlugin(Handle process, bool isHomebrew)
     }
     else
         goto exitFail;
-
 
     IFile_Close(&plugin);
     return true;

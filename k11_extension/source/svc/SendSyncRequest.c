@@ -28,6 +28,204 @@
 #include "svc/SendSyncRequest.h"
 #include "ipc.h"
 
+#if BUILD_FOR_LEVEL256
+static u32 IPC_MakeHeader(u16 command_id, unsigned normal_params, unsigned translate_params)
+{
+    return ((u32) command_id << 16) | (((u32) normal_params & 0x3F) << 6) | (((u32) translate_params & 0x3F) << 0);
+}
+
+typedef enum
+{
+    ON_SOCKET_ATTACHED = 0,
+    ON_SOCKET_DETACHED,
+} PlgUdsEvent;
+
+typedef struct
+{
+    Handle handle;
+    u32 *cmdbuf;
+    u32 backup[10];
+} InterruptiveRequest;
+
+typedef struct
+{
+    u32 processId;
+    bool isLogMode;
+    bool isPaused;
+    bool signalOnAttachProcess;
+    bool signalOnDetachProcess;
+} PlgUdsContext;
+
+#define REG32(addr) (*(vu32 *)(PA_PTR(addr)))
+#define PU_CHECK_HEADER(idRight, nbParamsRight, nbTranslateRight)                    \
+    if (cmdbuf[0] != IPC_MakeHeader((idRight), (nbParamsRight), (nbTranslateRight))) \
+    {                                                                                \
+        break;                                                                       \
+    }
+
+int InterruptiveRequest_Init(InterruptiveRequest *ctx, const char *port, u32 *cmdbuf)
+{
+    if (ctx == NULL)
+        return -1;
+
+    ctx->handle = 0;
+    ctx->cmdbuf = cmdbuf;
+
+    SessionInfo *sessionInfo = SessionInfo_FindFirst(port);
+
+    if (sessionInfo == NULL || createHandleForThisProcess(&ctx->handle, &sessionInfo->session->clientSession.syncObject.autoObject) < 0)
+        return -1;
+
+    memcpy(ctx->backup, cmdbuf, sizeof(ctx->backup));
+
+    return 0;
+}
+
+void InterruptiveRequest_Set(InterruptiveRequest *ctx, u32 id, u32 value)
+{
+    ctx->cmdbuf[id] = value;
+}
+
+Result InterruptiveRequest_Send(InterruptiveRequest *ctx)
+{
+    return SendSyncRequest(ctx->handle);
+}
+
+void InterruptiveRequest_Destroy(InterruptiveRequest *ctx)
+{
+    memcpy(ctx->cmdbuf, ctx->backup, sizeof(ctx->backup));
+    CloseHandle(ctx->handle);
+}
+
+Result PLGUDS_SignalEvent(u32 *cmdbuf, PlgUdsEvent event)
+{
+    Result ret;
+    InterruptiveRequest request;
+    if (InterruptiveRequest_Init(&request, "plg:UDS", cmdbuf) != 0)
+        return -1;
+
+    InterruptiveRequest_Set(&request, 0, IPC_MakeHeader(102, 1, 0));
+    InterruptiveRequest_Set(&request, 1, event);
+
+    if ((ret = InterruptiveRequest_Send(&request)) < 0)
+        return ret;
+
+    InterruptiveRequest_Destroy(&request);
+
+    return 0;
+}
+
+bool PLGUDS_IsConnectedProcess(PlgUdsContext *ctx, u32 pid)
+{
+    return ctx->processId == pid && !ctx->isLogMode;
+}
+
+bool PLGUDS_ProcessCommands(PlgUdsContext *ctx, u32 *cmdbuf, u32 *staticBuf)
+{
+    bool skip = false;
+
+    switch (cmdbuf[0] >> 16)
+    {
+    case 3: // Finalize
+        break;
+    case 14: // GetNodeInfoList
+        PU_CHECK_HEADER(14, 0, 6);
+        cmdbuf[0] = IPC_MakeHeader(31, 7, 0);
+        cmdbuf[7] = staticBuf[1];
+        break;
+    case 15: // Scan
+        PU_CHECK_HEADER(15, 16, 4);
+        cmdbuf[0] = IPC_MakeHeader(15, 20, 0);
+        break;
+    case 16: // SetBeaconData
+        PU_CHECK_HEADER(16, 1, 2);
+        cmdbuf[0] = IPC_MakeHeader(16, 3, 0);
+        break;
+    case 17: // GetBeaconData
+        PU_CHECK_HEADER(17, 1, 0);
+        cmdbuf[0] = IPC_MakeHeader(17, 2, 0);
+        cmdbuf[2] = staticBuf[1];
+        break;
+    case 20: // Receive
+        PU_CHECK_HEADER(20, 3, 0);
+        cmdbuf[0] = IPC_MakeHeader(20, 4, 0);
+        cmdbuf[4] = staticBuf[1];
+        break;
+    case 23: // Send
+        PU_CHECK_HEADER(23, 6, 2);
+        cmdbuf[0] = IPC_MakeHeader(23, 8, 0);
+        break;
+    case 27: // Initialize
+        PU_CHECK_HEADER(27, 12, 2);
+        cmdbuf[0] = IPC_MakeHeader(27, 14, 0);
+        break;
+    case 29: // CreateNetwork
+        PU_CHECK_HEADER(29, 1, 4);
+        cmdbuf[0] = IPC_MakeHeader(29, 5, 0);
+        break;
+    case 30: // ConnectToNetwork
+        PU_CHECK_HEADER(30, 2, 4);
+        cmdbuf[0] = IPC_MakeHeader(30, 6, 0);
+        break;
+    case 31: // GetNodeInfoList2
+        PU_CHECK_HEADER(31, 0, 6);
+        cmdbuf[0] = IPC_MakeHeader(31, 7, 0);
+        cmdbuf[7] = staticBuf[1];
+        break;
+    case 100: // PLGUDS_Initialize
+        PU_CHECK_HEADER(100, 2, 0);
+        ctx->processId = cmdbuf[1];
+        ctx->isLogMode = (cmdbuf[2] == 1);
+        ctx->signalOnAttachProcess = false;
+        break;
+    case 101: // PLGUDS_Finalize
+        PU_CHECK_HEADER(101, 0, 0);
+        ctx->processId = 0;
+        ctx->isLogMode = false;
+        ctx->signalOnAttachProcess = false;
+        break;
+    case 104: // PLGUDS_SetSignalState
+        PU_CHECK_HEADER(104, 1, 0);
+        ctx->signalOnAttachProcess = (cmdbuf[1] != 0);
+        skip = true; // PLGUDSに送信する必要がない。むしろPLGUDS自体が送信する場合があるので送信すべきでない。
+        break;
+    case 105: // PLGUDS_SetPause
+        PU_CHECK_HEADER(105, 1, 0);
+        ctx->isPaused = (cmdbuf[1] != 0);
+        skip = true;
+        break;
+    default:
+        break;
+    }
+
+    return skip;
+}
+
+void PLGUDS_Log(u32 *cmdbuf)
+{
+    Handle plgUdsHandle;
+    SessionInfo *plgUdsInfo = SessionInfo_FindFirst("plg:UDS");
+    if (plgUdsInfo != NULL && createHandleForThisProcess(&plgUdsHandle, &plgUdsInfo->session->clientSession.syncObject.autoObject) >= 0)
+    {
+        u32 header = cmdbuf[0];
+        u32 cmdbufOrig[30];
+        u32 cmdId = header >> 16;
+
+        if (1 < cmdId && cmdId < 0x24)
+        {
+            memcpy(cmdbufOrig, cmdbuf, sizeof(cmdbufOrig));
+
+            cmdbuf[0] = IPC_MakeHeader(cmdId, 0, 0);
+            SendSyncRequest(plgUdsHandle);
+
+            memcpy(cmdbuf, cmdbufOrig, sizeof(cmdbufOrig));
+        }
+
+        CloseHandle(plgUdsHandle);
+    }
+}
+#endif
+
 static inline bool isNdmuWorkaround(const SessionInfo *info, u32 pid)
 {
     return info != NULL && strcmp(info->name, "ndm:u") == 0 && hasStartedRosalinaNetworkFuncsOnce && pid >= nbSection0Modules;
@@ -41,6 +239,11 @@ Result SendSyncRequestHook(Handle handle)
     KClientSession *clientSession = (KClientSession *)KProcessHandleTable__ToKAutoObject(handleTable, handle);
 
     u32 *cmdbuf = (u32 *)((u8 *)currentCoreContext->objectContext.currentThread->threadLocalStorage + 0x80);
+#if BUILD_FOR_LEVEL256
+    u32 *staticBuf = (u32 *)((u8 *)currentCoreContext->objectContext.currentThread->threadLocalStorage + 0x180);
+    static PlgUdsContext plgUdsContext;
+    plgUdsContext.signalOnDetachProcess = false;
+#endif
     bool skip = false;
     Result res = 0;
 
@@ -49,6 +252,60 @@ Result SendSyncRequestHook(Handle handle)
 
     if(isValidClientSession)
     {
+#if BUILD_FOR_LEVEL256
+        // UDS Hook
+        SessionInfo *info = SessionInfo_Lookup(clientSession->parentSession);
+
+        if (info != NULL)
+        {
+            // plg:UDS使用時
+            if (PLGUDS_IsConnectedProcess(&plgUdsContext, pid))
+            {
+                // NDMのLocal-Communication排他処理をブロック
+                if (strcmp(info->name, "ndm:u") == 0 && !plgUdsContext.isPaused)
+                {
+                    if (cmdbuf[0] == 0x10042 && cmdbuf[1] == 2 /* Local-Communication */)
+                    {
+                        cmdbuf[1] = 1 /* Infrastructure */;
+                    }
+                }
+
+                // SocketのAttachProcess時にToo many processesエラーを回避
+                if (strcmp(info->name, "soc:U") == 0)
+                {
+                    if (plgUdsContext.signalOnAttachProcess)
+                    {
+                        // AttachProcess
+                        if (cmdbuf[0] == 0x10044)
+                        {
+                            if (PLGUDS_SignalEvent(cmdbuf, ON_SOCKET_ATTACHED) < 0)
+                            {
+                                *(u32 *)0xDEADBEEF = 0xDEADAAAA;
+                            }
+                        }
+
+                        // DetachProcess
+                        if (cmdbuf[0] == 0x190000)
+                        {
+                            plgUdsContext.signalOnDetachProcess = true;
+                        }
+                    }
+                }
+            }
+
+            // PLGUDS
+            if (strcmp(info->name, "plg:UDS") == 0)
+            {
+                skip = PLGUDS_ProcessCommands(&plgUdsContext, cmdbuf, staticBuf);
+            }
+        }
+
+        // Log mode
+        if (plgUdsContext.isLogMode && info != NULL && strcmp(info->name, "nwm::UDS") == 0)
+        {
+            PLGUDS_Log(cmdbuf);
+        }
+#endif
         switch (cmdbuf[0])
         {
             case 0x10042:
@@ -111,7 +368,15 @@ Result SendSyncRequestHook(Handle handle)
                 {
                     char name[9] = { 0 };
                     memcpy(name, cmdbuf + 1, 8);
-
+#if BUILD_FOR_LEVEL256
+                    if (PLGUDS_IsConnectedProcess(&plgUdsContext, pid) && !plgUdsContext.isPaused && strcmp(name, "nwm::UDS") == 0)
+                    {
+                        const char *plgUds = "plg:UDS";
+                        memcpy(cmdbuf + 1, plgUds, 8);
+                        strncpy(name, plgUds, 8);
+                        cmdbuf[3] = 7;
+                    }
+#endif
                     skip = true;
                     res = SendSyncRequest(handle);
                     if(res == 0)
@@ -259,6 +524,16 @@ Result SendSyncRequestHook(Handle handle)
         clientSession->syncObject.autoObject.vtable->DecrementReferenceCount(&clientSession->syncObject.autoObject);
 
     res = skip ? res : SendSyncRequest(handle);
+
+#if BUILD_FOR_LEVEL256
+    if (plgUdsContext.signalOnDetachProcess)
+    {
+        if (PLGUDS_SignalEvent(cmdbuf, ON_SOCKET_DETACHED) < 0)
+        {
+            *(u32 *)0xDEADBEEF = 0xDEADBBBB;
+        }
+    }
+#endif
 
     return res;
 }

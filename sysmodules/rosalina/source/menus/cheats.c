@@ -1058,7 +1058,7 @@ static u32 Cheat_ApplyCheat(const Handle processHandle, CheatDescription* const 
                         bool newSkip = !(arg1 == 0 || (HID_PAD & arg1) == arg1);
 
                         cheat_state.ifStack <<= 1;
-                        cheat_state.ifStack |= (newSkip || skipExecution) ? 1 : 0;;
+                        cheat_state.ifStack |= (newSkip || skipExecution) ? 1 : 0;
                         cheat_state.ifCount++;
                     }
                         break;

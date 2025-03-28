@@ -413,7 +413,7 @@ static Result LoadProcessImpl(Handle *outProcessHandle, const ExHeader_Info *exh
             region = desc & 0xF00;
     }
     if (region == 0)
-            return MAKERESULT(RL_PERMANENT, RS_INVALIDARG, RM_KERNEL, 2);
+        return MAKERESULT(RL_PERMANENT, RS_INVALIDARG, RM_KERNEL, 2);
 
     // allocate process memory
     vaddr.text_addr = csi->text.address;
@@ -451,7 +451,7 @@ static Result LoadProcessImpl(Handle *outProcessHandle, const ExHeader_Info *exh
             res = svcCreateProcess(outProcessHandle, codeset, exhi->aci.kernel_caps.descriptors, count);
             svcCloseHandle(codeset);
             res = R_SUCCEEDED(res) ? 0 : res;
-            
+
             // check for plugin
             if (!res && ((u32)((titleId >> 0x20) & 0xFFFFFFEDULL) == 0x00040000))
             {

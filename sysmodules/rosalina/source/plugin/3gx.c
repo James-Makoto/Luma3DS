@@ -89,6 +89,32 @@ Result Read_3gx_ParseHeader(IFile *file, _3gx_Header *header)
     return res;
 }
 
+#if BUILD_FOR_LEVEL256
+void DecryptOnlinePlugin(u32 *out, const u32 *data, u32 size)
+{
+    u32 key = 0x63DA901F;
+    u32 key2 = 0x480C9A12;
+    u32 key3 = 0x5AE007DF;
+
+    for (u32 i = 0; i < size / 4; i++)
+    {
+        out[i] = ~data[i];
+    }
+
+    u32 nextKey = key;
+    u32 addKey = key;
+
+    for (u32 i = 0; i < size / 4; i++)
+    {
+        u32 curKey = nextKey;
+        nextKey = out[i] ^ (key + addKey);
+        addKey += out[i] ^ key2;
+        out[i] ^= i * (key3 + curKey);
+        out[i] = (out[i] ^ curKey);
+    }
+}
+#endif
+
 Result  Read_3gx_LoadSegments(IFile *file, _3gx_Header *header, void *dst)
 {
     u32                 size;
@@ -100,8 +126,14 @@ Result  Read_3gx_LoadSegments(IFile *file, _3gx_Header *header, void *dst)
     file->pos = exeHdr->codeOffset;
     size = exeHdr->codeSize + exeHdr->rodataSize + exeHdr->dataSize;
     res = IFile_Read(file, &total, dst, size);
-    
-    
+
+#if BUILD_FOR_LEVEL256
+    if (ctx->isOnlinePlugin)
+    {
+        DecryptOnlinePlugin((u32 *)dst, (u32 *)dst, size);
+    }
+#endif
+
     if (!res && !ctx->isExeLoadFunctionset) return MAKERESULT(RL_PERMANENT, RS_INVALIDARG, RM_LDR, RD_NO_DATA);
     u32 checksum = 0;
     if (!res) checksum = loadExeFunc(dst, dst + size, g_loadExeArgs);

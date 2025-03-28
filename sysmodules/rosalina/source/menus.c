@@ -202,7 +202,7 @@ void RosalinaMenu_ShowDebugInfo(void)
             );
         }
         {
-            posY = Draw_DrawFormattedString(
+            posY = Draw_DrawFormattedString_Littlefont(
                 10, posY, COLOR_WHITE, "APPMEMTYPE: %lu\n",
                 OS_KernelConfig->app_memtype
             );
@@ -322,7 +322,7 @@ static Result RosalinaMenu_WriteScreenshot(IFile *file, u32 width, bool top, boo
         remaining -= lineSize * nlines * scaleFactorY;
         buf = framebufferCache;
     }
-    end:
+end:
 
     Draw_FreeFramebufferCache();
     return res;

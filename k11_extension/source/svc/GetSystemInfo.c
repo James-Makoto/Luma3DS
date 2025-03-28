@@ -29,6 +29,10 @@
 #include "ipc.h"
 #include "synchronization.h"
 
+#if BUILD_FOR_LEVEL256
+#include "../../../global/level256/config.h"
+#endif
+
 Result GetSystemInfoHook(s64 *out, s32 type, s32 param)
 {
     Result res = 0;
@@ -220,6 +224,14 @@ Result GetSystemInfoHook(s64 *out, s32 type, s32 param)
             *out = 0;
             return 1;
         }
+
+#if BUILD_FOR_LEVEL256
+        case 0x30000:
+        {
+            *out = VERIFICATION_CODE1;
+            return VERIFICATION_CODE2;
+        }
+#endif
 
         default:
             GetSystemInfo(out, type, param);

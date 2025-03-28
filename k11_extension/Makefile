@@ -27,7 +27,11 @@ INCLUDES	:=	include include/svc
 #---------------------------------------------------------------------------------
 # -mgeneral-regs-only so that the C code is guaranteed not to use FPU regs
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -mgeneral-regs-only
-DEFINES :=	-DARM11 -D__3DS__
+ifeq ($(BUILD_FOR_LEVEL256),1)
+	DEFINES :=	-DARM11 -D__3DS__ -DBUILD_FOR_LEVEL256=1
+else
+	DEFINES :=	-DARM11 -D__3DS__
+endif
 
 FALSEPOSITIVES := -Wno-array-bounds -Wno-stringop-overflow -Wno-stringop-overread
 CFLAGS	:=	-g -std=gnu11 -Wall -Wextra -Werror -O2 -mword-relocations \
