@@ -560,7 +560,7 @@ void SysConfigMenu_ChangeScreenBrightness(void)
         posY = Draw_DrawString(16, posY + 4, COLOR_WHITE, "按A开始调节，按B返回。\n\n");
 
         posY = Draw_DrawString(16, posY, COLOR_RED, "警告：\n");
-        posY = Draw_DrawString(16, posY+4, COLOR_WHITE, "  * 亮度值将受预设限制。\n");
+        posY = Draw_DrawString(16, posY+4, COLOR_WHITE, "  * 亮度值将受校准限制。\n");
         posY = Draw_DrawString(16, posY+4, COLOR_WHITE, "  * 调节亮度时不会显示下屏幕设置菜单。");
         Draw_FlushFramebuffer();
         Draw_Unlock();

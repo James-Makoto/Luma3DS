@@ -225,7 +225,7 @@ void RosalinaMenu_ShowCredits(void)
         Draw_Lock();
         Draw_DrawString(16, 16, COLOR_TITLE, "Rosalina -- Luma3DS 官方致谢");
 
-        u32 posY = Draw_DrawString(16, 40, COLOR_WHITE, "Luma3DS (c) 2016-2024\nAuroraWright, TuxSH") + 8;
+        u32 posY = Draw_DrawString(16, 40, COLOR_WHITE, "Luma3DS (c) 2016-2025\nAuroraWright, TuxSH") + 8;
 
         posY = Draw_DrawString(16, posY + SPACING_Y + 4, COLOR_WHITE, "3DSX 加载部分 —— fincs");
         posY = Draw_DrawString(16, posY + SPACING_Y + 4, COLOR_WHITE, "网络与 GDB 调试部分 —— Stary");
